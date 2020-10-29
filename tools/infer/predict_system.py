@@ -17,7 +17,7 @@ import sys
 __dir__ = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(__dir__)
 sys.path.append(os.path.abspath(os.path.join(__dir__, '../..')))
-##
+
 import tools.infer.utility as utility
 from ppocr.utils.utility import initial_logger
 
@@ -34,7 +34,7 @@ from ppocr.utils.utility import get_image_file_list, check_and_read_gif
 from PIL import Image
 from tools.infer.utility import draw_ocr
 from tools.infer.utility import draw_ocr_box_txt
-
+import pandas as pd
 
 class TextSystem(object):
     def __init__(self, args):
@@ -134,6 +134,8 @@ def main(args):
     text_sys = TextSystem(args)
     is_visualize = True
     font_path = args.vis_font_path
+    new_df = pd.DataFrame(columns=['Id', 'Expected'])
+    idx = 0
     for image_file in image_file_list:
         img, flag = check_and_read_gif(image_file)
         if not flag:
@@ -153,6 +155,9 @@ def main(args):
             if score >= drop_score:
                 text_str = "%s, %.3f" % (text, score)
                 print(text_str)
+
+        new_df.loc[idx] = [image_file, text_str]
+        idx += 1
 
         if is_visualize:
             image = Image.fromarray(cv2.cvtColor(img, cv2.COLOR_BGR2RGB))
@@ -175,7 +180,7 @@ def main(args):
                 draw_img[:, :, ::-1])
             print("The visualized image saved in {}".format(
                 os.path.join(draw_img_save, os.path.basename(image_file))))
-
+    new_df.to_csv('/content/submission.csv')
 
 if __name__ == "__main__":
     main(utility.parse_args())
